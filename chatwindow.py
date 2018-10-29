@@ -1,19 +1,27 @@
 # -*- coding:utf-8 -*-
 from tkinter import *
-
-import time,socket,threading
+import multiprocessing
+import time,threading,socket
 
 class chatwindow:
 
-    def __init__(self,client):
+    def __init__(self,client,myaddress,toaddress):
         # 创建窗口 
         self.t = Tk()
         self.client = client
         self.t.title('与' +  self.client +'聊天中')
+        self.clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)  # 另一个socket绑定端口监听其他客户端
+        self.clientsocket.settimeout(1)
+        self.clientsocket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+        self.clientsocket.bind(myaddress)
+        self.clientsocket.connect(toaddress)
 
         #接收到其他客户端的消息
-        #self.message = clientsocket.recv(1024)
-        self.message = str(time.ctime())
+        try:
+            self.message = self.clientsocket.recv(1024).decode("utf-8")
+        except socket.timeout:
+            pass
+        #self.message = str(time.ctime())
 
         # 创建frame容器
         self.frmLT = Frame(width=500, height=320, bg='white')
@@ -54,6 +62,7 @@ class chatwindow:
         self.strMsg = '我:' + time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()) +'\n '
         self.txtMsgList.insert(END, self.strMsg, 'greencolor')
         self.txtMsgList.insert(END, self.txtMsg.get('0.0', END))
+        self.clientsocket.send(str(self.txtMsg.get('0.0',END)).encode('utf-8'))
         self.txtMsg.delete('0.0', END)
 
     def cancelMsg(self):#取消消息
@@ -65,22 +74,25 @@ class chatwindow:
 
     def getMsg(self): #接收消息
         while True:
-            time.sleep(5)
-            if len(self.message) != 0:
-                self.strMsg = self.client + '：' + time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()) + '\n '
-                self.txtMsgList.insert(END, self.strMsg, 'greencolor')
-                self.txtMsgList.insert(END,self.message+'\n')
-                self.message = str(time.ctime())
-
-    def getMsgEvent(self,event): #接收消息事件
-        while True:
-            if len(self.message) != 0 or event.keysym == "Up":
-                self.getMsg()
+            #time.sleep(1)
+            try:
+                self.message = self.clientsocket.recv(1024).decode("utf-8")
+                if self.message:
+                    self.strMsg = self.client + '：' + time.strftime("%Y-%m-%d %H:%M:%S",time.localtime()) + '\n '
+                    self.txtMsgList.insert(END, self.strMsg, 'greencolor')
+                    self.txtMsgList.insert(END,self.message+'\n')
+                    #self.message = str(time.ctime())
+            except socket.timeout:
+                pass
 
     def runwindow(self):
         self.t.mainloop()
 
-
-if __name__ == '__main__':
-    chatwin = chatwindow("client1")
+if __name__=='__main__':
+    '''
+    print("2")
+    chatwin = chatwindow('wo',('127.0.0.1',60000),('127.0.0.1',8080))
+    print('0')
     chatwin.runwindow()
+    print("1")
+    '''
