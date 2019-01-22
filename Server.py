@@ -3,6 +3,8 @@ import socket
 import time
 import threading
 
+local_ip = socket.gethostbyname(socket.getfqdn(socket.gethostname()))
+
 
 class Peer:
     def __init__(self, id, ip, port):
@@ -15,7 +17,7 @@ class Peer:
 
 class Server:
     def __init__(self):
-        self.address = ('169.254.57.250', 40000)
+        self.address = (local_ip, 40000)
         self.serverSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.clients = []
 

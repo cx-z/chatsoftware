@@ -2,6 +2,8 @@
 import socket
 import time
 
+local_ip = socket.gethostbyname(socket.getfqdn(socket.gethostname()))
+
 
 class Peer:
     def __init__(self, id, ip, port, state):
@@ -29,18 +31,18 @@ class Client:
     def register(self):
         register_msg = str(self.id) + 'a' + self.ip + 'b' + str(self.port2)
         last_timer = time.time()
-        server_addr = ('169.254.57.250', 40000)
+        server_addr = (local_ip, 40000)
         while True:
             if (time.time()-last_timer) >= 5:
                 self.toServer.sendto(register_msg.encode('utf-8'), server_addr)
-                print('注册成功')
+                # print('注册成功')
                 last_timer = time.time()
 
     def get_client_info(self):
         while True:
             info, addr = self.toServer.recvfrom(1024)
             info = info.decode('utf-8')
-            print(len(self.peers))
+            # print(len(self.peers))
             if info:
                 for i in range(int(info[info.index('E')+1:])):
                     record_flag = False  # 该客户信息不在本机注册表self.peers中，则为False
@@ -58,3 +60,6 @@ class Client:
                         temp_peer = Peer(temp_id, temp_ip, temp_port, temp_state)
                         self.peers.append(temp_peer)
                     info = info[info.index('N')+1:]
+
+    def talk(self, peer_id):
+        pass
