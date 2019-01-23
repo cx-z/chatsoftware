@@ -8,7 +8,7 @@ class Application:
     def __init__(self, client_socket, my_id, client_id, client_address):
         self.my_id = my_id
         self.c_socket = client_socket  # 初始化时输入聊天对方的ID、地址和套接字
-        self.c_id = client_id  # 联系人ID列表
+        self.c_name = client_id  # 联系人ID列表
         self.c_address = client_address  # 联系人IP地址和端口号列表
         self.c_num = len(client_id)  # 联系人个数
         self.current_id = 0  # 当前聊天界面的联系人
@@ -32,13 +32,13 @@ class Application:
         self.btnCancel = tkinter.Button(self.frmLB, text='取消', width=8, command=self.cancel_message)
         # 联系人按钮
         self.btn_clients = []
-        for item in self.c_id:
+        for item in self.c_name:
             temp_btn = tkinter.Button(self.frmRT, text=item, width=30)
             temp_btn.bind('<Button-1>', self.btn_click)
             self.btn_clients.append(temp_btn)
 
-    def create_app(self):
-        self.root.title('{}与{}聊天'.format(self.my_id, self.c_id[self.current_id]))
+    def create_app(self):  # 在聊天框架中画出各部件
+        self.root.title('{}与{}聊天'.format(self.my_id, self.c_name[self.current_id]))
         # 窗口布局
         for i in range(self.c_num):
             if i == 0:  # 初始界面显示和第一个联系人的对话
@@ -52,9 +52,6 @@ class Application:
         self.frmLB.grid(row=2, column=0, columnspan=2)
         self.frmRT.grid(row=0, column=2, rowspan=3, padx=2, pady=3)
         # 固定大小
-        # for i in range(self.c_num):
-        #     self.frmLTs[i].grid_propagate(0)
-        #     self.txtMsgLists[i].grid()
         self.frmLC.grid_propagate(0)
         self.frmLB.grid_propagate(0)
         self.frmRT.grid_propagate(0)
@@ -65,12 +62,39 @@ class Application:
         for btn in self.btn_clients:
             btn.grid(row=self.btn_clients.index(btn))
 
+    def add_linkman(self, c_name, address):
+        self.c_name.append(c_name)
+        self.c_address.append(address)
+        frmLT = tkinter.Frame(width=500, height=320, bg='white')  # 已发送和已接收消息所在的框
+        self.frmLTs.append(frmLT)
+        txtMsgList = tkinter.Text(frmLT)  # 已发送和已接收的消息
+        txtMsgList.tag_config('greencolor', foreground='#008C00')  # 创建tag
+        self.txtMsgLists.append(txtMsgList)
+        temp_btn = tkinter.Button(self.frmRT, text=c_name, width=30)
+        temp_btn.bind('<Button-1>', self.btn_click)
+        self.btn_clients.append(temp_btn)
+        temp_btn.grid(row=self.btn_clients.index(temp_btn))
+        self.c_num += 1
+
+    def del_linkman(self, c_name):  # 删除不在线的联系人
+        temp_id = self.c_name.index(c_name)
+        self.btn_clients[temp_id].destroy()
+        self.frmLTs[temp_id].destroy()
+        self.txtMsgLists[temp_id].destroy()
+        del self.btn_clients[temp_id]
+        del self.c_address[temp_id]
+        del self.c_name[temp_id]
+        del self.frmLTs[temp_id]
+        del self.txtMsgLists[temp_id]
+        print(len(self.btn_clients))
+        self.c_num = self.c_num - 1
+
     def btn_click(self, event=None):
         btn_text = event.widget['text']
         for i in range(self.c_num):
-            if btn_text == self.c_id[i]:
+            if btn_text == self.c_name[i]:
                 self.current_id = i
-                self.root.title('{}与{}聊天'.format(self.my_id, self.c_id[self.current_id]))
+                self.root.title('{}与{}聊天'.format(self.my_id, self.c_name[self.current_id]))
                 self.frmLTs[i].grid(row=0, column=0, columnspan=2, padx=1, pady=3)
                 self.frmLTs[i].grid_propagate(0)
                 self.txtMsgLists[i].grid()
@@ -104,7 +128,7 @@ class Application:
                 r_msg = r_msg.decode('utf-8')
                 print()
                 c_id = self.c_address.index(ip_port)
-                str_msg = self.c_id[self.current_id] + '：' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
+                str_msg = self.c_name[self.current_id] + '：' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
                 self.txtMsgLists[c_id].insert(tkinter.END, str_msg, 'greencolor')
                 self.txtMsgLists[c_id].insert(tkinter.END, r_msg)
             except socket.timeout:
