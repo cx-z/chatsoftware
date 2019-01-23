@@ -5,13 +5,13 @@ import socket
 
 
 class Application:
-    def __init__(self, client_socket, my_id, client_id, client_address):
+    def __init__(self, client_socket, my_id):
         self.my_id = my_id
         self.c_socket = client_socket  # 初始化时输入聊天对方的ID、地址和套接字
-        self.c_name = client_id  # 联系人ID列表
-        self.c_address = client_address  # 联系人IP地址和端口号列表
-        self.c_num = len(client_id)  # 联系人个数
-        self.current_id = 0  # 当前聊天界面的联系人
+        self.c_name = []
+        self.c_address = []
+        self.c_num = 0
+        self.current_id = -1  # 当前聊天界面的联系人
         self.root = tkinter.Tk()
         # 创建frame容器
         self.frmLTs = []
@@ -38,7 +38,7 @@ class Application:
             self.btn_clients.append(temp_btn)
 
     def create_app(self):  # 在聊天框架中画出各部件
-        self.root.title('{}与{}聊天'.format(self.my_id, self.c_name[self.current_id]))
+        self.root.title(self.my_id)
         # 窗口布局
         for i in range(self.c_num):
             if i == 0:  # 初始界面显示和第一个联系人的对话
@@ -88,6 +88,8 @@ class Application:
         del self.txtMsgLists[temp_id]
         print(len(self.btn_clients))
         self.c_num = self.c_num - 1
+        if not self.c_num:
+            self.root.title(self.my_id)
 
     def btn_click(self, event=None):
         btn_text = event.widget['text']
@@ -104,15 +106,18 @@ class Application:
 
     def send_message(self):
         s_msg = self.txtMsg.get('0.0', tkinter.END).encode('utf-8')
-        try:
-            print(self.current_id)
-            self.c_socket.sendto(s_msg, self.c_address[self.current_id])
-            str_msg = "我:" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
-            self.txtMsgLists[self.current_id].insert(tkinter.END, str_msg, 'greencolor')
-            self.txtMsgLists[self.current_id].insert(tkinter.END, self.txtMsg.get('0.0', tkinter.END))
-            self.txtMsg.delete('0.0', tkinter.END)
-        except socket.error:
-            self.txtMsgLists[self.current_id].insert(tkinter.END, "对方不在线", 'greencolor')
+        if self.current_id != -1:
+            try:
+                print(self.current_id)
+                self.c_socket.sendto(s_msg, self.c_address[self.current_id])
+                str_msg = "我:" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
+                self.txtMsgLists[self.current_id].insert(tkinter.END, str_msg, 'greencolor')
+                self.txtMsgLists[self.current_id].insert(tkinter.END, self.txtMsg.get('0.0', tkinter.END))
+                self.txtMsg.delete('0.0', tkinter.END)
+            except socket.error:
+                self.txtMsgLists[self.current_id].insert(tkinter.END, "对方不在线", 'greencolor')
+        else:
+            pass
 
     def send_message_event(self, event):
         if event.keysym == 'Up':
@@ -123,18 +128,21 @@ class Application:
 
     def receive_message(self):
         while True:
-            try:
-                r_msg, ip_port = self.c_socket.recvfrom(1024)
-                r_msg = r_msg.decode('utf-8')
-                print()
-                c_id = self.c_address.index(ip_port)
-                str_msg = self.c_name[self.current_id] + '：' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
-                self.txtMsgLists[c_id].insert(tkinter.END, str_msg, 'greencolor')
-                self.txtMsgLists[c_id].insert(tkinter.END, r_msg)
-            except socket.timeout:
+            if self.current_id != -1:
+                try:
+                    r_msg, ip_port = self.c_socket.recvfrom(1024)
+                    r_msg = r_msg.decode('utf-8')
+                    print()
+                    c_id = self.c_address.index(ip_port)
+                    str_msg = self.c_name[self.current_id] + '：' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
+                    self.txtMsgLists[c_id].insert(tkinter.END, str_msg, 'greencolor')
+                    self.txtMsgLists[c_id].insert(tkinter.END, r_msg)
+                except socket.timeout:
+                    pass
+                except socket.error:
+                    self.txtMsgLists[self.current_id].insert(tkinter.END, "对方不在线!", 'greencolor')  # 此处不严谨，未必是当前界面联系人不在线
+            else:
                 pass
-            except socket.error:
-                self.txtMsgLists[self.current_id].insert(tkinter.END, "对方不在线!", 'greencolor')  # 此处不严谨，未必是当前界面联系人不在线
 
     def run(self):
         self.root.mainloop()

@@ -11,7 +11,8 @@ class Peer:
         self.ip = ip
         self.port = port
         self.timer = 0
-        self.state = state
+        self.state = state  # 标记此联系人是否在线
+        self.app_flag = False  # 标记此联系人是否添加到聊天窗口
 
 
 class Client:
@@ -23,6 +24,8 @@ class Client:
         self.peers = []
         self.toServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.toClient = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.peers_name = []  # 联系人名单
+        self.peers_address = []
 
     def bind_address(self):
         self.toServer.bind((self.ip, self.port1))
@@ -60,6 +63,17 @@ class Client:
                         temp_peer = Peer(temp_id, temp_ip, temp_port, temp_state)
                         self.peers.append(temp_peer)
                     info = info[info.index('N')+1:]
+                    print("{}\t{}\t{}\t{}\t".format(temp_id, temp_ip, str(temp_port), str(temp_state)))
 
-    def talk(self, peer_id):
-        pass
+    def add_peer_to_app(self, app):
+        while True:
+            for item in self.peers:
+                if item.id != self.id:
+                    c_name = "client" + str(int(item.id))
+                    if not item.app_flag and item.state:
+                        app.add_linkman(c_name, (item.ip, item.port))
+                        item.app_flag = True
+                    if item.app_flag and not item.state:
+                        app.del_linkman(c_name)
+                        item.app_flag = False
+            time.sleep(1)

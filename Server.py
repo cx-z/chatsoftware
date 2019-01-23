@@ -36,7 +36,7 @@ class Server:
     def check_state(self):
         while True:
             for item in self.clients:
-                if time.time()-item.timer >= 30:
+                if time.time()-item.timer >= 10:
                     item.state = False
                     # print("{}已下线".format(item.id))
             time.sleep(1)
