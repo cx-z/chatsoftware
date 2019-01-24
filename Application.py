@@ -62,7 +62,7 @@ class Application:
         for btn in self.btn_clients:
             btn.grid(row=self.btn_clients.index(btn))
 
-    def add_linkman(self, c_name, address):
+    def add_linkman(self, c_name, address):  # 在聊天界面右侧添加新的联系人
         self.c_name.append(c_name)
         self.c_address.append(address)
         frmLT = tkinter.Frame(width=500, height=320, bg='white')  # 已发送和已接收消息所在的框
@@ -86,12 +86,13 @@ class Application:
         del self.c_name[temp_id]
         del self.frmLTs[temp_id]
         del self.txtMsgLists[temp_id]
-        print(len(self.btn_clients))
         self.c_num = self.c_num - 1
         if not self.c_num:
             self.root.title(self.my_id)
+        if self.c_num == 0:
+            self.current_id = -1
 
-    def btn_click(self, event=None):
+    def btn_click(self, event=None):  # 点击各联系人对应的按钮，切换聊天界面
         btn_text = event.widget['text']
         for i in range(self.c_num):
             if btn_text == self.c_name[i]:
@@ -104,7 +105,7 @@ class Application:
                 self.frmLTs[i].grid_forget()
                 self.txtMsgLists[i].grid_forget()
 
-    def send_message(self):
+    def send_message(self):  # 将消息发送给当前聊天窗口对应的联系人
         s_msg = self.txtMsg.get('0.0', tkinter.END).encode('utf-8')
         if self.current_id != -1:
             try:
@@ -119,14 +120,14 @@ class Application:
         else:
             pass
 
-    def send_message_event(self, event):
+    def send_message_event(self, event):  # Up键作为发送消息的快捷键
         if event.keysym == 'Up':
             self.send_message()
 
-    def cancel_message(self):
+    def cancel_message(self):  # 取消已写到待发送窗口的信息
         self.txtMsg.delete('0.0', tkinter.END)
 
-    def receive_message(self):
+    def receive_message(self):  # 从socket处接收信息，并根据发送地址将信息写到对应联系人的聊天窗口
         while True:
             if self.current_id != -1:
                 try:
@@ -134,7 +135,8 @@ class Application:
                     r_msg = r_msg.decode('utf-8')
                     print()
                     c_id = self.c_address.index(ip_port)
-                    str_msg = self.c_name[self.current_id] + '：' + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
+                    str_msg = self.c_name[self.current_id] + '：' \
+                        + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + '\n'
                     self.txtMsgLists[c_id].insert(tkinter.END, str_msg, 'greencolor')
                     self.txtMsgLists[c_id].insert(tkinter.END, r_msg)
                 except socket.timeout:

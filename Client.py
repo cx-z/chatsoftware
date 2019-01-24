@@ -10,7 +10,6 @@ class Peer:
         self.id = id
         self.ip = ip
         self.port = port
-        self.timer = 0
         self.state = state  # 标记此联系人是否在线
         self.app_flag = False  # 标记此联系人是否添加到聊天窗口
 
@@ -31,17 +30,17 @@ class Client:
         self.toServer.bind((self.ip, self.port1))
         self.toClient.bind((self.ip, self.port2))
 
-    def register(self):
+    def register(self):  # 向服务器注册
         register_msg = str(self.id) + 'a' + self.ip + 'b' + str(self.port2)
         last_timer = time.time()
         server_addr = (local_ip, 40000)
         while True:
-            if (time.time()-last_timer) >= 5:
+            if (time.time()-last_timer) >= 15:
                 self.toServer.sendto(register_msg.encode('utf-8'), server_addr)
-                # print('注册成功')
                 last_timer = time.time()
+            time.sleep(3)
 
-    def get_client_info(self):
+    def get_client_info(self):  # 从服务器获取其他客户端的信息
         while True:
             info, addr = self.toServer.recvfrom(1024)
             info = info.decode('utf-8')
@@ -64,8 +63,9 @@ class Client:
                         self.peers.append(temp_peer)
                     info = info[info.index('N')+1:]
                     print("{}\t{}\t{}\t{}\t".format(temp_id, temp_ip, str(temp_port), str(temp_state)))
+            time.sleep(1)
 
-    def add_peer_to_app(self, app):
+    def add_peer_to_app(self, app):  # 将新的联系人添加到聊天界面或将下线的联系人从聊天界面删除
         while True:
             for item in self.peers:
                 if item.id != self.id:
@@ -76,4 +76,4 @@ class Client:
                     if item.app_flag and not item.state:
                         app.del_linkman(c_name)
                         item.app_flag = False
-            time.sleep(1)
+            time.sleep(3)
