@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 import socket
 import time
+import queue
 
 local_ip = socket.gethostbyname(socket.getfqdn(socket.gethostname()))
 
@@ -24,9 +25,10 @@ class Client:
         self.toServer = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.toClient = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.peers_name = []  # 联系人名单
-        self.peers_address = []
+        self.peers_address = []  # 联系人地址
+        self.sendMsg = queue.Queue(100)  # 未得到对方确认的消息队列
 
-    def bind_address(self):
+    def bind_address(self):  # 绑定IP地址
         self.toServer.bind((self.ip, self.port1))
         self.toClient.bind((self.ip, self.port2))
 
